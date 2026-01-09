@@ -7,13 +7,13 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# MySQL config from environment variables
 db_config = {
     "host": os.getenv("DB_HOST"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME")
 }
-
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -25,70 +25,33 @@ HTML_TEMPLATE = """
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(to right, #ffecd2, #fcb69f);
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
+        h1 { text-align: center; color: #333; }
         table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #ffffffcc;
+            width: 80%; margin: 20px auto; border-collapse: collapse; background-color: #ffffffcc;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        th, td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f57c00;
-            color: white;
-        }
-        tr:hover {
-            background-color: #ffe0b2;
-        }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+        th { background-color: #f57c00; color: white; }
+        tr:hover { background-color: #ffe0b2; }
         form {
-            width: 80%;
-            margin: 20px auto;
-            background-color: #ffffffcc;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 80%; margin: 20px auto; background-color: #ffffffcc;
+            padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         input[type=text], input[type=number], input[type=email] {
-            padding: 10px;
-            margin: 5px;
-            width: 23%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            padding: 10px; margin: 5px; width: 23%; border-radius: 5px; border: 1px solid #ccc;
         }
         input[type=submit] {
-            padding: 10px 20px;
-            background-color: #f57c00;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
+            padding: 10px 20px; background-color: #f57c00; color: white;
+            border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;
         }
-        input[type=submit]:hover {
-            background-color: #ef6c00;
-        }
+        input[type=submit]:hover { background-color: #ef6c00; }
         a.button {
-            text-decoration: none;
-            padding: 5px 10px;
-            background-color: #1976d2;
-            color: white;
-            border-radius: 5px;
-            margin: 0 5px;
+            text-decoration: none; padding: 5px 10px; background-color: #1976d2;
+            color: white; border-radius: 5px; margin: 0 5px;
         }
-        a.button:hover {
-            background-color: #0d47a1;
-        }
+        a.button:hover { background-color: #0d47a1; }
     </style>
 </head>
 <body>
@@ -105,20 +68,11 @@ HTML_TEMPLATE = """
 
     <table>
         <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Mark</th>
-            <th>Actions</th>
+            <th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Mark</th><th>Actions</th>
         </tr>
         {% for s in students %}
         <tr>
-            <td>{{ s[0] }}</td>
-            <td>{{ s[1] }}</td>
-            <td>{{ s[2] }}</td>
-            <td>{{ s[3] }}</td>
-            <td>{{ s[4] }}</td>
+            <td>{{ s[0] }}</td><td>{{ s[1] }}</td><td>{{ s[2] }}</td><td>{{ s[3] }}</td><td>{{ s[4] }}</td>
             <td>
                 <a class="button" href="/edit/{{ s[0] }}">Edit</a>
                 <a class="button" href="/delete/{{ s[0] }}">Delete</a>
@@ -130,12 +84,9 @@ HTML_TEMPLATE = """
 </html>
 """
 
-
+# Database functions
 def get_connection():
-    return mysql.connector.connect(
-        **db_config,
-        connection_timeout=10
-    )
+    return mysql.connector.connect(**db_config, connection_timeout=10)
 
 def get_all_students():
     conn = get_connection()
@@ -158,10 +109,8 @@ def get_student(student_id):
 def insert_student(name, email, phone, mark):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO students (name, email, phone, mark) VALUES (%s,%s,%s,%s)",
-        (name, email, phone, mark)
-    )
+    cursor.execute("INSERT INTO students (name, email, phone, mark) VALUES (%s,%s,%s,%s)",
+                   (name, email, phone, mark))
     conn.commit()
     cursor.close()
     conn.close()
@@ -169,10 +118,8 @@ def insert_student(name, email, phone, mark):
 def update_student(id, name, email, phone, mark):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE students SET name=%s,email=%s,phone=%s,mark=%s WHERE id=%s",
-        (name, email, phone, mark, id)
-    )
+    cursor.execute("UPDATE students SET name=%s,email=%s,phone=%s,mark=%s WHERE id=%s",
+                   (name, email, phone, mark, id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -185,46 +132,30 @@ def delete_student(id):
     cursor.close()
     conn.close()
 
+# Routes
 @app.route("/")
 def home():
-    return render_template_string(
-        HTML_TEMPLATE,
-        students=get_all_students(),
-        student=None
-    )
+    return render_template_string(HTML_TEMPLATE, students=get_all_students(), student=None)
 
 @app.route("/add_or_update", methods=["POST"])
 def add_or_update():
     id = request.form.get("id")
     if id:
-        update_student(
-            id,
-            request.form["name"],
-            request.form["email"],
-            request.form["phone"],
-            request.form["mark"]
-        )
+        update_student(id, request.form["name"], request.form["email"], request.form["phone"], request.form["mark"])
     else:
-        insert_student(
-            request.form["name"],
-            request.form["email"],
-            request.form["phone"],
-            request.form["mark"]
-        )
+        insert_student(request.form["name"], request.form["email"], request.form["phone"], request.form["mark"])
     return redirect("/")
 
 @app.route("/edit/<int:id>")
 def edit(id):
-    return render_template_string(
-        HTML_TEMPLATE,
-        students=get_all_students(),
-        student=get_student(id)
-    )
+    return render_template_string(HTML_TEMPLATE, students=get_all_students(), student=get_student(id))
 
 @app.route("/delete/<int:id>")
 def delete(id):
     delete_student(id)
     return redirect("/")
 
+# Run Flask on Clever Cloud dynamic port
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
