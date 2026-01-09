@@ -3,168 +3,139 @@ import mysql.connector
 import os
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 app = Flask(__name__)
 
 db_config = {
-    'host': os.getenv("DB_HOST"),
-    'user': os.getenv("DB_USER"),
-    'password': os.getenv("DB_PASSWORD"),
-    'database': os.getenv("DB_NAME")
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }
+
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Management</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <title>Students Management</title>
     <style>
-        
-        @media (max-width: 576px) {
-            h1 {
-                font-size: 22px;
-            }
-
-            .container {
-                padding: 10px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-
-            .table-responsive {
-                overflow-x: auto;
-            }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ffecd2, #fcb69f);
+            margin: 0;
+            padding: 20px;
         }
-
-        
-        @media (min-width: 577px) and (max-width: 991px) {
-            h1 {
-                font-size: 26px;
-            }
-
-            table {
-                font-size: 14px;
-            }
+        h1 {
+            text-align: center;
+            color: #333;
         }
-
-        
-        @media (min-width: 992px) {
-            h1 {
-                font-size: 32px;
-            }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #ffffffcc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f57c00;
+            color: white;
+        }
+        tr:hover {
+            background-color: #ffe0b2;
+        }
+        form {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ffffffcc;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        input[type=text], input[type=number], input[type=email] {
+            padding: 10px;
+            margin: 5px;
+            width: 23%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type=submit] {
+            padding: 10px 20px;
+            background-color: #f57c00;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        input[type=submit]:hover {
+            background-color: #ef6c00;
+        }
+        a.button {
+            text-decoration: none;
+            padding: 5px 10px;
+            background-color: #1976d2;
+            color: white;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+        a.button:hover {
+            background-color: #0d47a1;
         }
     </style>
 </head>
+<body>
+    <h1>Students Management</h1>
 
-<body class="bg-light">
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Student Management</h1>
+    <form action="/add_or_update" method="POST">
+        <input type="hidden" name="id" value="{{ student.id if student else '' }}">
+        <input type="text" name="name" placeholder="Name" value="{{ student.name if student else '' }}" required>
+        <input type="email" name="email" placeholder="Email" value="{{ student.email if student else '' }}" required>
+        <input type="text" name="phone" placeholder="Phone" value="{{ student.phone if student else '' }}" required>
+        <input type="number" name="mark" placeholder="Mark" value="{{ student.mark if student else '' }}" required>
+        <input type="submit" value="{{ 'Update' if student else 'Add' }} Student">
+    </form>
 
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('add_or_update') }}">
-                <input type="hidden" name="id" value="{{ student.id if student else '' }}">
-
-                <div class="mb-3">
-                    <input type="text" name="name" class="form-control" placeholder="Name" required value="{{ student.name if student else '' }}">
-                </div>
-
-                <div class="mb-3">
-                    <input type="email" name="email" class="form-control" placeholder="Email" required value="{{ student.email if student else '' }}">
-                </div>
-
-                <div class="mb-3">
-                    <input type="text" name="phone" class="form-control" placeholder="Phone" required value="{{ student.phone if student else '' }}">
-                </div>
-
-                <div class="mb-3">
-                    <input type="number" name="mark" class="form-control" placeholder="Mark" required value="{{ student.mark if student else '' }}">
-                </div>
-
-                <button class="btn btn-primary">
-                    {{ 'Update Student' if student else 'Add Student' }}
-                </button>
-
-                {% if student %}
-                <a href="/" class="btn btn-secondary mt-2">Cancel</a>
-                {% endif %}
-            </form>
-        </div>
-    </div>
-
-    <h2 class="text-center mb-3">All Students</h2>
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th><th>Name</th><th>Email</th>
-                    <th>Phone</th><th>Mark</th><th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in students %}
-                <tr>
-                    <td>{{ s[0] }}</td>
-                    <td>{{ s[1] }}</td>
-                    <td>{{ s[2] }}</td>
-                    <td>{{ s[3] }}</td>
-                    <td>{{ s[4] }}</td>
-                    <td>
-                        <a href="/edit/{{ s[0] }}" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="/delete/{{ s[0] }}" class="btn btn-sm btn-danger"
-                           onclick="return confirm('Are you sure?')">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not students %}
-                <tr>
-                    <td colspan="6" class="text-center text-muted">No students found</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Mark</th>
+            <th>Actions</th>
+        </tr>
+        {% for s in students %}
+        <tr>
+            <td>{{ s[0] }}</td>
+            <td>{{ s[1] }}</td>
+            <td>{{ s[2] }}</td>
+            <td>{{ s[3] }}</td>
+            <td>{{ s[4] }}</td>
+            <td>
+                <a class="button" href="/edit/{{ s[0] }}">Edit</a>
+                <a class="button" href="/delete/{{ s[0] }}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>
 """
 
 
-
-
 def get_connection():
-    return mysql.connector.connect(**db_config)
-
-def create_table():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100),
-            email VARCHAR(100),
-            phone VARCHAR(15),
-            mark INT
-        )
-    """)
-    conn.commit()
-    cursor.close()
-    conn.close()
+    return mysql.connector.connect(
+        **db_config,
+        connection_timeout=10
+    )
 
 def get_all_students():
     conn = get_connection()
@@ -188,7 +159,7 @@ def insert_student(name, email, phone, mark):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO students (name, email, phone, mark) VALUES (%s, %s, %s, %s)",
+        "INSERT INTO students (name, email, phone, mark) VALUES (%s,%s,%s,%s)",
         (name, email, phone, mark)
     )
     conn.commit()
@@ -199,7 +170,7 @@ def update_student(id, name, email, phone, mark):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE students SET name=%s, email=%s, phone=%s, mark=%s WHERE id=%s",
+        "UPDATE students SET name=%s,email=%s,phone=%s,mark=%s WHERE id=%s",
         (name, email, phone, mark, id)
     )
     conn.commit()
@@ -214,25 +185,35 @@ def delete_student(id):
     cursor.close()
     conn.close()
 
-
-
-@app.route('/')
+@app.route("/")
 def home():
-    create_table()
-    return render_template_string(HTML_TEMPLATE, students=get_all_students(), student=None)
+    return render_template_string(
+        HTML_TEMPLATE,
+        students=get_all_students(),
+        student=None
+    )
 
-@app.route('/add_or_update', methods=['POST'])
+@app.route("/add_or_update", methods=["POST"])
 def add_or_update():
-    id = request.form.get('id')
+    id = request.form.get("id")
     if id:
-        update_student(id, request.form['name'], request.form['email'],
-                       request.form['phone'], request.form['mark'])
+        update_student(
+            id,
+            request.form["name"],
+            request.form["email"],
+            request.form["phone"],
+            request.form["mark"]
+        )
     else:
-        insert_student(request.form['name'], request.form['email'],
-                       request.form['phone'], request.form['mark'])
-    return redirect('/')
+        insert_student(
+            request.form["name"],
+            request.form["email"],
+            request.form["phone"],
+            request.form["mark"]
+        )
+    return redirect("/")
 
-@app.route('/edit/<int:id>')
+@app.route("/edit/<int:id>")
 def edit(id):
     return render_template_string(
         HTML_TEMPLATE,
@@ -240,10 +221,10 @@ def edit(id):
         student=get_student(id)
     )
 
-@app.route('/delete/<int:id>')
+@app.route("/delete/<int:id>")
 def delete(id):
     delete_student(id)
-    return redirect('/')
+    return redirect("/")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
